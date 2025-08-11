@@ -2,29 +2,30 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.api import api_router
+from app.core.config import settings
 
 app = FastAPI(
-    title="BeInformed API",
+    title=settings.PROJECT_NAME,
     description="API for BeInformed - Intelligent Information Analysis Platform",
     version="0.1.0"
 )
 
-# Configure CORS
+# Configure CORS to allow all origins during development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=False,  # Must be False when using "*"
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include the API router
-app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 async def root():
     """Root endpoint to check if API is running."""
-    return {"message": "Welcome to BeInformed API"}
+    return {"message": f"Welcome to {settings.PROJECT_NAME} API"}
 
 @app.get("/health")
 async def health_check():

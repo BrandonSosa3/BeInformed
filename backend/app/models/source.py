@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, Float, Text
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from app.db.base import Base
@@ -38,6 +39,8 @@ class Source(Base):
     # Credibility score (calculated by our AI)
     credibility_score = Column(Float, nullable=True)
     
+    articles = relationship("Article", back_populates="source")
+
     def __repr__(self):
         """String representation of this object"""
         return f"<Source {self.title}>"
