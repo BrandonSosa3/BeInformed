@@ -111,6 +111,12 @@ export interface Source {
     source_name: string | null;
     credibility_score: number | null;
     sentiment_score: number | null;
+    sentiment_label: string | null;
+    sentiment_confidence: number | null;
+    political_bias_score: number | null;
+    political_bias_label: string | null;
+    sensationalism_score: number | null;
+    sensationalism_label: string | null;
     bias_scores: Record<string, any> | null;
     created_at: string;
     updated_at: string | null;

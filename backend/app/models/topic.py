@@ -14,7 +14,7 @@ class TopicArticle(Base):
     relevance_score = Column(Integer, nullable=True)  # Optional relevance score
     
     # Relationships
-    topic = relationship("Topic", back_populates="topic_articles", overlaps="articles")
+    topic = relationship("Topic", back_populates="topic_articles", overlaps="topics")
     article = relationship("Article", back_populates="topic_articles", overlaps="topics")
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -40,7 +40,7 @@ class Topic(Base):
     
     # Relationships
     topic_articles = relationship("TopicArticle", back_populates="topic", cascade="all, delete-orphan")
-    articles = relationship("Article", secondary="topic_articles", back_populates="topics", overlaps="topic_articles, topic")
+    articles = relationship("Article", secondary="topic_articles", back_populates="topics", overlaps="topic_articles, article")
     
     def __repr__(self):
         return f"<Topic {self.id}: {self.name}>"

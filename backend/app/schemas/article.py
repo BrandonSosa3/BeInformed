@@ -31,6 +31,8 @@ class ArticleUpdate(BaseModel):
     source_name: Optional[str] = None
     credibility_score: Optional[float] = None
     sentiment_score: Optional[float] = None
+    sentiment_label: Optional[str] = None
+    sentiment_confidence: Optional[float] = None
     bias_scores: Optional[Dict[str, Any]] = None
 
 class ArticleInDB(ArticleBase):
@@ -39,6 +41,12 @@ class ArticleInDB(ArticleBase):
     source_id: Optional[int] = None
     credibility_score: Optional[float] = None
     sentiment_score: Optional[float] = None
+    sentiment_label: Optional[str] = None
+    sentiment_confidence: Optional[float] = None
+    political_bias_score: Optional[float] = None
+    political_bias_label: Optional[str] = None
+    sensationalism_score: Optional[float] = None
+    sensationalism_label: Optional[str] = None
     bias_scores: Optional[Dict[str, Any]] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
