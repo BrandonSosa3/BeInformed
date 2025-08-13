@@ -47,6 +47,10 @@ class ArticleInDB(ArticleBase):
     political_bias_label: Optional[str] = None
     sensationalism_score: Optional[float] = None
     sensationalism_label: Optional[str] = None
+    extractive_summary: Optional[str] = None
+    beginner_summary: Optional[str] = None
+    technical_summary: Optional[str] = None
+    summary_generated_at: Optional[datetime] = None
     bias_scores: Optional[Dict[str, Any]] = None
     created_at: datetime
     updated_at: Optional[datetime] = None

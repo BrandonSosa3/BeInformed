@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Search from './pages/Search';
 import About from './pages/About';
 import TopicDetail from './pages/TopicDetail';
+import ArticleDetail from './pages/ArticleDetail';
 
 // Error page
 const ErrorPage: React.FC = () => {
@@ -48,6 +49,10 @@ const router = createBrowserRouter([
       {
         path: "topics/:topicId",
         element: <TopicDetail />
+      },
+      {
+        path: "articles/:articleId",
+        element: <ArticleDetail />
       }
     ]
   }

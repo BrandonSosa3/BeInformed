@@ -98,7 +98,8 @@ export interface Source {
   }
   
   // Article types
-  export interface Article {
+// Update the Article interface
+export interface Article {
     id: number;
     title: string;
     url: string;
@@ -117,6 +118,10 @@ export interface Source {
     political_bias_label: string | null;
     sensationalism_score: number | null;
     sensationalism_label: string | null;
+    extractive_summary: string | null;
+    beginner_summary: string | null;
+    technical_summary: string | null;
+    summary_generated_at: string | null;
     bias_scores: Record<string, any> | null;
     created_at: string;
     updated_at: string | null;

@@ -344,17 +344,15 @@ const TopicDetail: React.FC = () => {
         <div className="divide-y divide-gray-200">
           {articleList.items.length > 0 ? (
             articleList.items.map((article) => (
-              <div key={article.id} className="p-6">
+              <div key={article.id} className="p-6 border-b border-gray-200 last:border-b-0">
                 <div className="flex justify-between items-start">
                   <h3 className="text-lg font-medium text-gray-900 flex-grow">
-                    <a 
-                      href={article.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
+                    <Link 
+                      to={`/articles/${article.id}`}
                       className="hover:text-blue-600"
                     >
                       {article.title}
-                    </a>
+                    </Link>
                   </h3>
                   
                   {/* Analysis badges container */}
@@ -435,14 +433,23 @@ const TopicDetail: React.FC = () => {
                 )}
                 
                 <div className="mt-3 flex items-center justify-between">
-                  <a 
-                    href={article.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                  >
-                    Read Article &rarr;
-                  </a>
+                  <div>
+                    <Link 
+                      to={`/articles/${article.id}`}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium mr-4"
+                    >
+                      View Details
+                    </Link>
+                    
+                    <a 
+                      href={article.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-600 hover:text-gray-800 text-sm"
+                    >
+                      Read Original &rarr;
+                    </a>
+                  </div>
                   
                   {/* Analysis timestamp or analyze button */}
                   {article.last_analyzed_at ? (

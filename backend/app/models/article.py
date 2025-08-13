@@ -52,5 +52,10 @@ class Article(Base):
     sensationalism_score = Column(Float, nullable=True, index=True, comment="Sensationalism score from 0.0 (objective) to 1.0 (sensationalist)")
     sensationalism_label = Column(String(20), nullable=True, comment="Sensationalism label (factual, somewhat sensational, highly sensational)")
     
+    extractive_summary = Column(Text, nullable=True, comment="Extractive summary of the article content")
+    beginner_summary = Column(Text, nullable=True, comment="Beginner-friendly summary with simplified language")
+    technical_summary = Column(Text, nullable=True, comment="Technical summary preserving specialized terminology")
+    summary_generated_at = Column(DateTime(timezone=True), nullable=True, comment="When the summaries were generated")
+    
     def __repr__(self):
         return f"<Article {self.id}: {self.title}>"
