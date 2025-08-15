@@ -119,23 +119,6 @@ const About: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      {/* Get started section */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Get Started</h2>
-        <p className="text-gray-700 mb-6">
-          Ready to transform how you consume information? BeInformed is designed to help you navigate 
-          the complex information landscape with confidence and clarity.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md transition-colors">
-            Create Account
-          </button>
-          <button className="border border-gray-300 hover:bg-gray-50 text-gray-800 font-medium py-2 px-6 rounded-md transition-colors">
-            Learn More
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

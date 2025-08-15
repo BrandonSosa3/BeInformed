@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { topicApi } from '../services/api';
-import type { Topic, Article, ArticleList } from '../types/api';
+import type { Topic, Article, ArticleList, TopicStatsData, SourceStats } from '../types/api';
+import TopicStatistics from '../components/dashboard/TopicStatistics';
+import ArticleFilters from '../components/dashboard/ArticleFilters';
+import BadgesLegend from '../components/BadgesLegend';
+
+interface SentimentTimeData {
+    dates: string[];
+    sentiment: number[];
+    counts: number[];
+  }
 
 const TopicDetail: React.FC = () => {
   const { topicId } = useParams<{ topicId: string }>();
@@ -11,6 +21,30 @@ const TopicDetail: React.FC = () => {
   const [articleList, setArticleList] = useState<ArticleList | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [stats, setStats] = useState<TopicStatsData | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  const [sentimentTrends, setSentimentTrends] = useState<SentimentTimeData>({ 
+    dates: [], 
+    sentiment: [], 
+    counts: [] 
+  });
+  const [sentimentTrendsLoading, setSentimentTrendsLoading] = useState(true);
+
+  const [sourceStats, setSourceStats] = useState<SourceStats[]>([]);
+  const [sourceStatsLoading, setSourceStatsLoading] = useState(true);
+
+  const [filters, setFilters] = useState<{
+    sentiment: string[];
+    bias: string[];
+    sources: string[];
+    dateRange: string;
+  }>({
+    sentiment: [],
+    bias: [],
+    sources: [],
+    dateRange: 'all'
+  });
   
   const fetchTopic = async () => {
     setLoading(true);
@@ -38,10 +72,159 @@ const TopicDetail: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Get available sources from articles
+  const availableSources = useMemo(() => {
+    if (!articleList || !articleList.items) return [];
+    
+    const sources = articleList.items
+      .map(article => article.source_name)
+      .filter((name): name is string => Boolean(name)); // Type guard to ensure non-null strings
+    
+    return Array.from(new Set(sources)).sort();
+  }, [articleList]);
   
+  // Add a function to filter articles
+  const filteredArticles = useMemo(() => {
+    if (!articleList || !articleList.items) return [];
+    
+    return articleList.items.filter(article => {
+      // Filter by sentiment
+      if (filters.sentiment.length > 0 && article.sentiment_label) {
+        if (!filters.sentiment.includes(article.sentiment_label)) {
+          return false;
+        }
+      }
+      
+      // Filter by bias
+      if (filters.bias.length > 0 && article.political_bias_label) {
+        if (!filters.bias.includes(article.political_bias_label)) {
+          return false;
+        }
+      }
+      
+      // Filter by source
+      if (filters.sources.length > 0 && article.source_name) {
+        if (!filters.sources.includes(article.source_name)) {
+          return false;
+        }
+      }
+      
+      // Filter by date range
+      if (filters.dateRange !== 'all' && article.published_at) {
+        const publishDate = new Date(article.published_at);
+        const now = new Date();
+        const daysAgo = parseInt(filters.dateRange);
+        const cutoffDate = new Date(now.setDate(now.getDate() - daysAgo));
+        
+        if (publishDate < cutoffDate) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }, [articleList, filters]);
+  
+  // Handle filter changes
+  const handleFilterChange = (newFilters: {
+    sentiment: string[];
+    bias: string[];
+    sources: string[];
+    dateRange: string;
+  }) => {
+    setFilters(newFilters);
+  };
+  
+  // Fetch topic data and articles
   useEffect(() => {
     fetchTopic();
   }, [topicId, currentPage]);
+  
+  // Fetch topic statistics
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      if (!topicId) return;
+      
+      setStatsLoading(true);
+      try {
+        console.log("Fetching statistics for topic:", topicId);
+        if (topicApi.getTopicStatistics) {
+          const statsData = await topicApi.getTopicStatistics(parseInt(topicId), 30);
+          console.log("Received statistics data:", statsData);
+          setStats(statsData);
+        } else {
+          console.error("topicApi.getTopicStatistics function not available");
+        }
+      } catch (err) {
+        console.error('Error fetching topic statistics:', err);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    
+    fetchStatistics();
+  }, [topicId]);
+
+  useEffect(() => {
+    const fetchSentimentTrends = async () => {
+      if (!topicId) return;
+      
+      setSentimentTrendsLoading(true);
+      try {
+        if (topicApi.getSentimentOverTime) {
+          const trendsData = await topicApi.getSentimentOverTime(parseInt(topicId), 30, 'day');
+          setSentimentTrends(trendsData);
+        }
+      } catch (err) {
+        console.error('Error fetching sentiment trends:', err);
+        // Don't set error state, as this is secondary data
+      } finally {
+        setSentimentTrendsLoading(false);
+      }
+    };
+    
+    fetchSentimentTrends();
+  }, [topicId]);
+
+  useEffect(() => {
+    const fetchSourceStats = async () => {
+      if (!topicId) return;
+      
+      setSourceStatsLoading(true);
+      try {
+        if (topicApi.getTopicSourceStatistics) {
+          const sources = await topicApi.getTopicSourceStatistics(parseInt(topicId));
+          setSourceStats(sources);
+        }
+      } catch (err) {
+        console.error('Error fetching source statistics:', err);
+        // Don't set error state, as this is secondary data
+      } finally {
+        setSourceStatsLoading(false);
+      }
+    };
+    
+    fetchSourceStats();
+  }, [topicId]);
+
+    // Create a function to refresh all data at once
+    const refreshData = () => {
+        fetchTopic();
+        
+        if (topicApi.getTopicStatistics && topicId) {
+          topicApi.getTopicStatistics(parseInt(topicId), 30).then(setStats);
+        }
+        
+        if (topicApi.getSentimentOverTime && topicId) {
+          topicApi.getSentimentOverTime(parseInt(topicId), 30, 'day').then(setSentimentTrends);
+        }
+        
+        if (topicApi.getTopicSourceStatistics && topicId) {
+          topicApi.getTopicSourceStatistics(parseInt(topicId)).then(setSourceStats);
+        }
+      };
+
   
   const handlePageChange = (page: number) => {
     if (page >= 1 && (!articleList || page <= articleList.pages)) {
@@ -55,19 +238,32 @@ const TopicDetail: React.FC = () => {
     setIsAnalyzing(true);
     
     try {
+      console.log("Starting topic analysis for topic:", topicId);
+      
       // Call the analysis API
-      await fetch(`http://localhost:8000/api/v1/analysis/topics/${topicId}/analyze`, {
+      const response = await fetch(`http://localhost:8000/api/v1/analysis/topics/${topicId}/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
       });
       
-      // Wait a moment to give the analysis time to start
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const analysisResult = await response.json();
+      console.log("Analysis completed with result:", analysisResult);
+      
+      // Wait to ensure backend processing completes
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
       // Refresh the data
       await fetchTopic();
+      
+      // Explicitly fetch fresh statistics
+      if (topicApi.getTopicStatistics) {
+        console.log("Fetching fresh statistics after analysis");
+        const statsData = await topicApi.getTopicStatistics(parseInt(topicId), 30);
+        console.log("Fresh statistics after analysis:", statsData);
+        setStats(statsData);
+      }
     } catch (error) {
       console.error('Error analyzing topic:', error);
     } finally {
@@ -91,6 +287,14 @@ const TopicDetail: React.FC = () => {
       
       // Refresh the data
       await fetchTopic();
+      
+      // Refresh statistics after analysis
+      if (topicApi.getTopicStatistics) {
+        setTimeout(async () => {
+          const statsData = await topicApi.getTopicStatistics(parseInt(topicId!), 30);
+          setStats(statsData);
+        }, 1000);
+      }
     } catch (error) {
       console.error('Error analyzing article:', error);
     }
@@ -147,6 +351,31 @@ const TopicDetail: React.FC = () => {
   
   // Calculate bias stats
   const biasStats = getBiasStats();
+
+  // Create a better local stats object directly from the articles
+  const localStats = articleList ? {
+    totalArticles: articleList.total,
+    analyzedArticles: articleList.items.filter(article => article.last_analyzed_at).length,
+    averageSentiment: 0, // Can't easily calculate this
+    sentimentDistribution: {
+      positive: articleList.items.filter(a => a.sentiment_label === 'positive').length,
+      neutral: articleList.items.filter(a => a.sentiment_label === 'neutral').length,
+      negative: articleList.items.filter(a => a.sentiment_label === 'negative').length
+    },
+    biasDistribution: {
+      leftLeaning: articleList.items.filter(a => a.political_bias_label === 'left-leaning').length,
+      centrist: articleList.items.filter(a => a.political_bias_label === 'centrist' || a.political_bias_label === 'neutral').length,
+      rightLeaning: articleList.items.filter(a => a.political_bias_label === 'right-leaning').length
+    },
+    sourcesCount: new Set(articleList.items.map(a => a.source_name).filter(Boolean)).size,
+    sensationalismLevel: 0, // Can't easily calculate this
+    timeRange: "current page"
+  } : null;
+  
+  // Use API stats if they look valid, otherwise use our local calculation
+  const displayStats = (stats && stats.totalArticles > 0) ? stats : localStats;
+
+  
   
   return (
     <div className="container mx-auto px-4 py-8">
@@ -189,19 +418,24 @@ const TopicDetail: React.FC = () => {
             )}
           </button>
           <button
-            onClick={() => fetchTopic()}
+            onClick={refreshData}
             className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium px-4 py-2 rounded-md transition-colors flex items-center"
-          >
+            >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
             </svg>
             Refresh
           </button>
         </div>
       </div>
       
-      {/* Bias Analysis Summary (shown only if there are analyzed articles) */}
-      {biasStats && (
+      {/* Use the new TopicStatistics component if available */}
+      {displayStats && (
+        <TopicStatistics stats={displayStats} isLoading={statsLoading} />
+      )}
+      
+      {/* Keep the existing Bias Analysis Summary if new stats not available */}
+      {!stats && biasStats && (
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Topic Analysis</h2>
           
@@ -334,16 +568,31 @@ const TopicDetail: React.FC = () => {
           </div>
         </div>
       )}
-      
+
+      {/* Article Filters */}
+      <ArticleFilters 
+        onFilterChange={handleFilterChange}
+        availableSources={availableSources}
+        initialFilters={filters}
+      />
+
       {/* Articles list */}
       <div className="bg-white rounded-lg shadow overflow-hidden mb-6">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">Articles</h2>
+        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+          <div className="flex items-center">
+            <h2 className="text-xl font-semibold text-gray-800">Articles</h2>
+            <BadgesLegend />
+          </div>
+          {filteredArticles.length !== articleList.items.length && (
+            <span className="text-sm text-gray-500">
+              Showing {filteredArticles.length} of {articleList.total} articles
+            </span>
+          )}
         </div>
         
         <div className="divide-y divide-gray-200">
-          {articleList.items.length > 0 ? (
-            articleList.items.map((article) => (
+          {filteredArticles.length > 0 ? (
+            filteredArticles.map((article) => (
               <div key={article.id} className="p-6 border-b border-gray-200 last:border-b-0">
                 <div className="flex justify-between items-start">
                   <h3 className="text-lg font-medium text-gray-900 flex-grow">
@@ -469,12 +718,14 @@ const TopicDetail: React.FC = () => {
             ))
           ) : (
             <div className="p-6 text-center text-gray-500">
-              No articles found for this topic.
+              {articleList.items.length > 0 
+                ? 'No articles match the current filters.' 
+                : 'No articles found for this topic.'}
             </div>
           )}
         </div>
       </div>
-      
+
       {/* Pagination */}
       {articleList.pages > 1 && (
         <div className="flex justify-center">

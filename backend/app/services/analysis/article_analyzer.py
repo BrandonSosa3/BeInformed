@@ -190,14 +190,6 @@ class ArticleAnalysisService:
     def analyze_articles_by_topic(self, db: Session, topic_id: int, limit: int = 100) -> Dict[str, Any]:
         """
         Analyze articles for a specific topic.
-        
-        Args:
-            db: Database session
-            topic_id: ID of the topic
-            limit: Maximum number of articles to analyze
-            
-        Returns:
-            Dict[str, Any]: Results of the analysis operation
         """
         from app.models.topic import Topic, TopicArticle
         
@@ -219,32 +211,50 @@ class ArticleAnalysisService:
                 results["errors"].append(f"Topic with ID {topic_id} not found")
                 return results
             
-            # Get articles for this topic that haven't been analyzed yet
-            # or were analyzed more than 7 days ago
-            one_week_ago = datetime.now() - timedelta(days=7)
-            articles = db.query(Article).join(
-                TopicArticle
-            ).filter(
-                TopicArticle.topic_id == topic_id,
-                (Article.last_analyzed_at == None) | (Article.last_analyzed_at < one_week_ago)
-            ).limit(limit).all()
+            # Log the topic we're analyzing
+            logger.info(f"Analyzing articles for topic: {topic.name} (ID: {topic_id})")
             
-            results["articles_found"] = len(articles)
+            # Get all article IDs for this topic
+            topic_article_query = db.query(TopicArticle.article_id).filter(TopicArticle.topic_id == topic_id)
+            article_ids = [ta.article_id for ta in topic_article_query.all()]
+            
+            logger.info(f"Found {len(article_ids)} article IDs associated with topic {topic_id}")
+            
+            if not article_ids:
+                results["errors"].append(f"No articles found for topic {topic_id}")
+                return results
+            
+            # Now get the actual articles
+            articles = db.query(Article).filter(Article.id.in_(article_ids)).all()
+            
+            logger.info(f"Retrieved {len(articles)} actual articles for analysis")
             
             # Analyze each article
             for article in articles:
                 try:
+                    # Log before analysis
+                    logger.info(f"Analyzing article {article.id}: {article.title}")
+                    
+                    # Analyze the article
                     self.analyze_article(article, db)
+                    
+                    # Log after analysis
+                    logger.info(f"Successfully analyzed article {article.id}")
+                    
                     results["articles_updated"] += 1
+                    results["articles_analyzed"] += 1
                 except Exception as e:
                     error_msg = f"Error analyzing article {article.id}: {str(e)}"
                     logger.error(error_msg)
                     results["errors"].append(error_msg)
-                
-                results["articles_analyzed"] += 1
+            
+            # Explicitly commit changes
+            db.commit()
+            logger.info(f"Committed changes for {results['articles_updated']} articles")
             
             return results
         except Exception as e:
+            db.rollback()
             error_msg = f"Error analyzing articles for topic {topic_id}: {str(e)}"
             logger.error(error_msg)
             results["errors"].append(error_msg)

@@ -135,6 +135,42 @@ export interface Article {
     size: number;
     pages: number;
   }
+
+  export interface TopicStatsData {
+    totalArticles: number;
+    analyzedArticles: number;
+    averageSentiment: number;
+    sentimentDistribution: {
+      positive: number;
+      neutral: number;
+      negative: number;
+    };
+    biasDistribution: {
+      leftLeaning: number;
+      centrist: number;
+      rightLeaning: number;
+    };
+    sourcesCount: number;
+    sensationalismLevel: number;
+    timeRange: string;
+  }
+  
+  // Source statistics
+  export interface SourceStats {
+    sourceId: number | null;
+    sourceName: string;
+    articleCount: number;
+    averageSentiment: number;
+    averageBias: number;
+    averageSensationalism: number;
+  }
+  
+  // Sentiment over time data
+  export interface SentimentTimeData {
+    dates: string[];
+    sentiment: number[];
+    counts: number[];
+  }
   
   // Error type
   export interface ApiError {

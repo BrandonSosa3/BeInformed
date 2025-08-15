@@ -1,8 +1,16 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+  
+  // Helper to determine if a link is active
+  const isActive = (path: string) => {
+    if (path === '/' && location.pathname === '/') return true;
+    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    return false;
+  };
 
   return (
     <header className="bg-white shadow">
@@ -17,31 +25,25 @@ export default function Header() {
             <nav className="hidden md:ml-6 md:flex md:space-x-8">
               <Link
                 to="/"
-                className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/search"
-                className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive('/') 
+                    ? 'border-blue-500 text-gray-900' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
               >
                 Search
               </Link>
               <Link
                 to="/about"
-                className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive('/about') 
+                    ? 'border-blue-500 text-gray-900' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
               >
                 About
               </Link>
             </nav>
-          </div>
-          <div className="hidden md:ml-6 md:flex md:items-center">
-            <button
-              type="button"
-              className="bg-blue-600 px-4 py-2 rounded-md text-white font-medium hover:bg-blue-700 transition-colors"
-            >
-              Get Started
-            </button>
           </div>
           <div className="-mr-2 flex items-center md:hidden">
             <button
@@ -93,21 +95,22 @@ export default function Header() {
         <div className="pt-2 pb-3 space-y-1">
           <Link
             to="/"
-            className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Dashboard
-          </Link>
-          <Link
-            to="/search"
-            className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300"
+            className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+              isActive('/') 
+                ? 'border-blue-500 text-blue-700 bg-blue-50' 
+                : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300'
+            }`}
             onClick={() => setIsMenuOpen(false)}
           >
             Search
           </Link>
           <Link
             to="/about"
-            className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300"
+            className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+              isActive('/about') 
+                ? 'border-blue-500 text-blue-700 bg-blue-50' 
+                : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300'
+            }`}
             onClick={() => setIsMenuOpen(false)}
           >
             About

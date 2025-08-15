@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { articleApi } from '../services/api';
 import type { Article } from '../types/api';
 import ArticleSummary from '../components/layout/ArticleSummary';
+import BadgesLegend from '../components/BadgesLegend';
 
 const ArticleDetail: React.FC = () => {
   const { articleId } = useParams<{ articleId: string }>();
@@ -60,23 +61,43 @@ const ArticleDetail: React.FC = () => {
     }
   };
   
-  // Helper function to clean content - remove anything that looks like a summary
+  // Enhanced function to clean content - remove anything that looks like a summary
   const cleanContent = (content: string | null): string => {
     if (!content) return '';
     
-    // Remove the truncated indicator and any text before it
+    // If content is very short (less than 300 chars), it's probably just a summary
+    if (content.length < 300) return '';
+    
+    // Remove truncation marker and anything before it
     if (content.includes("[+")) {
       const parts = content.split("[+");
-      // Check if the first part (before [+) looks like a summary
-      if (article?.title && parts[0].includes(article.title)) {
-        return ''; // Return empty if it's duplicating the title/summary
+      // If first part contains the title or is very short, remove it
+      if (article?.title && (
+          parts[0].includes(article.title) || 
+          parts[0].length < 200)
+      ) {
+        return ''; // Return empty
       }
       return parts[0].trim(); // Just return the content without the truncation marker
     }
     
-    // If no truncation marker but content starts with title, it might be a summary
+    // If content starts with the title or description, it might be a summary
     if (article?.title && content.startsWith(article.title)) {
-      return ''; // Return empty to avoid showing duplicate content
+      return ''; // Return empty
+    }
+    
+    if (article?.description && content.startsWith(article.description)) {
+      return ''; // Return empty
+    }
+    
+    // If content contains phrases like "Read more" or has fewer than 3 sentences, 
+    // it might be a truncated preview
+    if (
+      content.includes("Read more") || 
+      content.includes("...") || 
+      content.split(". ").length < 3
+    ) {
+      return '';
     }
     
     return content;
@@ -136,51 +157,56 @@ const ArticleDetail: React.FC = () => {
           </div>
           
           {/* Analysis badges */}
-          <div className="flex flex-wrap gap-2">
-            {/* Sentiment badge */}
-            {article.sentiment_label && (
-              <span 
-                className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${
-                  article.sentiment_label === 'positive' 
-                    ? 'bg-green-100 text-green-800' 
-                    : article.sentiment_label === 'negative'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
-                }`}
-              >
-                {article.sentiment_label}
-              </span>
-            )}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap gap-2">
+              {/* Sentiment badge */}
+              {article.sentiment_label && (
+                <span 
+                  className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${
+                    article.sentiment_label === 'positive' 
+                      ? 'bg-green-100 text-green-800' 
+                      : article.sentiment_label === 'negative'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
+                  {article.sentiment_label}
+                </span>
+              )}
+              
+              {/* Political bias badge */}
+              {article.political_bias_label && (
+                <span 
+                  className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${
+                    article.political_bias_label === 'left-leaning' 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : article.political_bias_label === 'right-leaning'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-purple-100 text-purple-800'
+                  }`}
+                >
+                  {article.political_bias_label}
+                </span>
+              )}
+              
+              {/* Sensationalism badge */}
+              {article.sensationalism_label && (
+                <span 
+                  className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${
+                    article.sensationalism_label === 'factual' 
+                      ? 'bg-green-100 text-green-800' 
+                      : article.sensationalism_label === 'somewhat sensational'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-orange-100 text-orange-800'
+                  }`}
+                >
+                  {article.sensationalism_label}
+                </span>
+              )}
+            </div>
             
-            {/* Political bias badge */}
-            {article.political_bias_label && (
-              <span 
-                className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${
-                  article.political_bias_label === 'left-leaning' 
-                    ? 'bg-blue-100 text-blue-800' 
-                    : article.political_bias_label === 'right-leaning'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-purple-100 text-purple-800'
-                }`}
-              >
-                {article.political_bias_label}
-              </span>
-            )}
-            
-            {/* Sensationalism badge */}
-            {article.sensationalism_label && (
-              <span 
-                className={`px-2 py-1 rounded-full text-xs font-medium flex items-center ${
-                  article.sensationalism_label === 'factual' 
-                    ? 'bg-green-100 text-green-800' 
-                    : article.sensationalism_label === 'somewhat sensational'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-orange-100 text-orange-800'
-                }`}
-              >
-                {article.sensationalism_label}
-              </span>
-            )}
+            {/* Add BadgesLegend here */}
+            <BadgesLegend />
           </div>
         </div>
         
@@ -220,28 +246,14 @@ const ArticleDetail: React.FC = () => {
         </div>
       )}
       
-      {/* Article content - only show if we have cleaned content */}
-      {cleanedContent ? (
+      {/* Article content - ONLY show if we have meaningful cleaned content */}
+      {cleanedContent && cleanedContent.length > 0 && (
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="prose max-w-none">
             {cleanedContent.split('\n').map((paragraph, index) => (
               paragraph.trim() ? <p key={index} className="mb-4">{paragraph}</p> : null
             ))}
           </div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6 text-center py-8">
-          <p className="text-gray-500">
-            Full content not available.
-            <a 
-              href={article.url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 ml-2"
-            >
-              Read on original source
-            </a>
-          </p>
         </div>
       )}
       

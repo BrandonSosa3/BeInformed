@@ -1,9 +1,9 @@
+// In your router.tsx or App.tsx (wherever your router is configured)
 import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 // Layout and pages
 import Layout from './components/layout/Layout';
-import Dashboard from './pages/Dashboard';
 import Search from './pages/Search';
 import About from './pages/About';
 import TopicDetail from './pages/TopicDetail';
@@ -35,11 +35,7 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       {
-        index: true, // Default route
-        element: <Dashboard />
-      },
-      {
-        path: "search",
+        index: true, // Default route is now Search
         element: <Search />
       },
       {

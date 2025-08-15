@@ -2,7 +2,7 @@ import axios from 'axios';
 import type {
   Source, SourceCreate, SourceUpdate,
   Topic, TopicSearchRequest, TopicSearchResponse,
-  Article, ArticleList
+  Article, ArticleList, TopicStatsData, SourceStats, SentimentTimeData
 } from '../types/api';
 
 // Create axios instance
@@ -65,6 +65,42 @@ export const topicApi = {
     params?: { page?: number; size?: number; sort_by?: string }
   ) => {
     const response = await api.get<ArticleList>(`/topics/${topicId}/articles`, { params });
+    return response.data;
+  },
+
+  getTopicStatistics: async (topicId: number, days: number = 30) => {
+    try {
+      console.log(`Calling API: /statistics/topics/${topicId}?days=${days}`);
+      const response = await api.get<TopicStatsData>(`/statistics/topics/${topicId}?days=${days}`);
+      console.log("API response:", response);
+      return response.data;
+    } catch (error) {
+      console.error("Error in getTopicStatistics:", error);
+      // Return a default stats object to prevent NaN errors
+      return {
+        totalArticles: 0,
+        analyzedArticles: 0,
+        averageSentiment: 0,
+        sentimentDistribution: { positive: 0, neutral: 0, negative: 0 },
+        biasDistribution: { leftLeaning: 0, centrist: 0, rightLeaning: 0 },
+        sourcesCount: 0,
+        sensationalismLevel: 0,
+        timeRange: "all time"
+      };
+    }
+  },
+  
+  // Source statistics for a topic
+  getTopicSourceStatistics: async (topicId: number) => {
+    const response = await api.get<SourceStats[]>(`/statistics/topics/${topicId}/sources`);
+    return response.data;
+  },
+  
+  // Sentiment over time data
+  getSentimentOverTime: async (topicId: number, days: number = 30, interval: string = 'day') => {
+    const response = await api.get<SentimentTimeData>(
+      `/statistics/topics/${topicId}/sentiment-over-time?days=${days}&interval=${interval}`
+    );
     return response.data;
   }
 };
