@@ -29,6 +29,15 @@ async def root():
     """Root endpoint to check if API is running."""
     return {"message": "Welcome to BeInformed API"}
 
+@app.get("/db-test")
+async def test_db():
+    try:
+        # Add your database connection test here
+        # This depends on how your database is configured
+        return {"status": "database connected"}
+    except Exception as e:
+        return {"error": str(e)}
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""

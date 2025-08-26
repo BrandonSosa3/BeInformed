@@ -244,7 +244,7 @@ const TopicDetail: React.FC = () => {
       console.log("Starting topic analysis for topic:", topicId);
       
       // Call the analysis API
-      const response = await fetch(`${API_URL}/analysis/articles/${articleId}/analyze`, {
+      const response = await fetch(`${API_URL}/analysis/topics/${topicId}/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -277,7 +277,7 @@ const TopicDetail: React.FC = () => {
   const handleAnalyzeArticle = async (articleId: number) => {
     try {
       // Call the analysis API
-      const response = await fetch(`${API_URL}/analysis/topics/${topicId}/analyze`, {
+      const response = await fetch(`${API_URL}/analysis/articles/${articleId}/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
