@@ -10,7 +10,7 @@ load_dotenv()
 # Database connection details
 POSTGRES_SERVER = os.getenv("POSTGRES_SERVER", "localhost")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "brandonsosa")  # Default to your username
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "1Monkey*")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "beinformednew_db")
 
 # Construct database URL

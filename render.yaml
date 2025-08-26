@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: beinformed-backend
+    env: python
+    plan: free
+    buildCommand: "cd backend && pip install -r requirements.txt"
+    startCommand: "cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: POSTGRES_SERVER
+        fromDatabase:
+          name: beinformed-db
+          property: host
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: beinformed-db
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: beinformed-db
+          property: password
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: beinformed-db
+          property: database
+      - key: NEWS_API_KEY
+        value: "6664d96bd37e497e87f2edca75141028"
+
+databases:
+  - name: beinformed-db
+    databaseName: beinformednew_db
+    user: brandonsosa
+    plan: free

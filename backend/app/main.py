@@ -1,25 +1,25 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
-from app.api.api import api_router
+app = FastAPI()
 
-app = FastAPI(
-    title="BeInformed API",
-    description="API for BeInformed - Intelligent Information Analysis Platform",
-    version="0.1.0"
-)
-
-# Configure CORS
+# CORS configuration for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,  # Must be False when using "*"
+    allow_origins=[
+        "http://localhost:3000",  # Local development
+        "https://*.vercel.app",   # Any Vercel deployment
+        # You'll add your specific Vercel URL here later
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
 # Include the API router
-app.include_router(api_router, prefix="/api/v1")
+#app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/")
 async def root():
