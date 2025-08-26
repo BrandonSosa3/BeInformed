@@ -15,7 +15,6 @@ const api = axios.create({
     },
     // Remove withCredentials for "*" origin
   });
-
 // API service for sources
 export const sourceApi = {
   getSources: async (params?: { skip?: number; limit?: number; source_type?: string }) => {
