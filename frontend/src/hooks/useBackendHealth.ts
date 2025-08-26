@@ -1,0 +1,136 @@
+// hooks/useBackendHealth.ts
+import { useState, useEffect, useRef } from 'react';
+import { API_URL } from '../services/api';
+
+interface HealthStatus {
+  isHealthy: boolean;
+  isChecking: boolean;
+  isSpinningUp: boolean;
+  retryCount: number;
+  message: string;
+}
+
+export const useBackendHealth = () => {
+  const [status, setStatus] = useState<HealthStatus>({
+    isHealthy: false,
+    isChecking: true,
+    isSpinningUp: false,
+    retryCount: 0,
+    message: 'Checking backend status...'
+  });
+
+  const intervalRef = useRef<number | null>(null);
+  const maxRetries = 40; // 40 * 5 seconds = 200 seconds (3.3 minutes)
+
+  const checkHealth = async (): Promise<boolean> => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch(`${API_URL.replace('/api/v1', '')}/health`, {
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+
+      clearTimeout(timeoutId);
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const startHealthCheck = () => {
+    setStatus(prev => ({ ...prev, isChecking: true }));
+
+    const performCheck = async () => {
+      const isHealthy = await checkHealth();
+      
+      setStatus(prev => {
+        const newRetryCount = prev.retryCount + 1;
+        
+        if (isHealthy) {
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+          return {
+            isHealthy: true,
+            isChecking: false,
+            isSpinningUp: false,
+            retryCount: newRetryCount,
+            message: 'Backend is ready!'
+          };
+        }
+
+        // Determine if backend is spinning up
+        const isSpinningUp = newRetryCount > 2 && newRetryCount < maxRetries;
+        
+        let message = 'Checking backend status...';
+        if (isSpinningUp) {
+          const estimatedMinutes = Math.ceil((maxRetries - newRetryCount) * 5 / 60);
+          message = `Backend is starting up... Estimated wait: ${estimatedMinutes} minute(s)`;
+        } else if (newRetryCount >= maxRetries) {
+          message = 'Backend appears to be unavailable. Please try again later.';
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+        }
+
+        return {
+          isHealthy: false,
+          isChecking: newRetryCount < maxRetries,
+          isSpinningUp,
+          retryCount: newRetryCount,
+          message
+        };
+      });
+    };
+
+    // Initial check
+    performCheck();
+
+    // Set up interval for subsequent checks
+    intervalRef.current = setInterval(performCheck, 5000); // Check every 5 seconds
+  };
+
+  useEffect(() => {
+
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        setStatus({
+          isHealthy: true,
+          isChecking: false,
+          isSpinningUp: false,
+          retryCount: 0,
+          message: 'Local development'
+        });
+        return;
+      }
+      
+    startHealthCheck();
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
+
+  const retryHealthCheck = () => {
+    setStatus({
+      isHealthy: false,
+      isChecking: true,
+      isSpinningUp: false,
+      retryCount: 0,
+      message: 'Checking backend status...'
+    });
+    startHealthCheck();
+  };
+
+  return {
+    ...status,
+    retryHealthCheck
+  };
+};

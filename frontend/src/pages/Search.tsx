@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { topicApi } from '../services/api';
+import { SearchOverlay } from '../components/BackendStatusBanner';
+import { useBackendHealth } from '../hooks/useBackendHealth';
 import type { Topic, Article } from '../types/api';
 
 const Search: React.FC = () => {
   const navigate = useNavigate();
+  const { isHealthy } = useBackendHealth();
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -18,6 +21,12 @@ const Search: React.FC = () => {
     e.preventDefault();
     
     if (!searchQuery.trim()) return;
+    
+    // Don't allow search if backend isn't ready
+    if (!isHealthy) {
+      setSearchError('Backend is still starting up. Please wait a moment and try again.');
+      return;
+    }
     
     setIsSearching(true);
     setSearchError(null);
@@ -57,42 +66,56 @@ const Search: React.FC = () => {
     <div className="container mx-auto px-4">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Search</h1>
       
-      {/* Search form */}
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <form onSubmit={handleSearch}>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Enter a topic to search for (e.g., artificial intelligence, climate change)"
-              className="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button 
-              type="submit" 
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-md transition-colors flex items-center"
-              disabled={isSearching}
-            >
-              {isSearching ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Searching...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  Search
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+      {/* Search form - wrapped with backend health overlay */}
+      <SearchOverlay isBackendReady={isHealthy}>
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <form onSubmit={handleSearch}>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Enter a topic to search for (e.g., artificial intelligence, climate change)"
+                className="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                disabled={!isHealthy}
+              />
+              <button 
+                type="submit" 
+                className={`font-medium px-4 py-2 rounded-md transition-colors flex items-center ${
+                  !isHealthy 
+                    ? 'bg-gray-400 cursor-not-allowed text-gray-700' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+                disabled={isSearching || !isHealthy}
+              >
+                {isSearching ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Searching...
+                  </>
+                ) : !isHealthy ? (
+                  <>
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Backend Starting...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    Search
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </SearchOverlay>
       
       {/* Error message */}
       {searchError && (
@@ -177,6 +200,11 @@ const Search: React.FC = () => {
           </svg>
           <p className="text-gray-500">Search for a topic to see results</p>
           <p className="text-gray-500 text-sm mt-1">Enter a topic like "artificial intelligence" or "climate change"</p>
+          {!isHealthy && (
+            <p className="text-amber-600 text-sm mt-2 font-medium">
+              Search will be available once the backend finishes starting up
+            </p>
+          )}
         </div>
       )}
     </div>
