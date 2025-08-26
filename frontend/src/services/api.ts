@@ -21,7 +21,6 @@ export const sourceApi = {
     const response = await api.get<Source[]>('/sources', { params });
     return response.data;
   },
-
   getSource: async (id: number) => {
     const response = await api.get<Source>(`/sources/${id}`);
     return response.data;
