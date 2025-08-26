@@ -8,6 +8,7 @@ import type { Topic, ArticleList, TopicStatsData, SourceStats } from '../types/a
 import TopicStatistics from '../components/dashboard/TopicStatistics';
 import ArticleFilters from '../components/dashboard/ArticleFilters';
 import BadgesLegend from '../components/BadgesLegend';
+import { API_URL } from '../services/api';
 
 interface SentimentTimeData {
     dates: string[];
@@ -243,7 +244,7 @@ const TopicDetail: React.FC = () => {
       console.log("Starting topic analysis for topic:", topicId);
       
       // Call the analysis API
-      const response = await fetch(`http://localhost:8000/api/v1/analysis/topics/${topicId}/analyze`, {
+      const response = await fetch(`${API_URL}/analysis/articles/${articleId}/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -276,7 +277,7 @@ const TopicDetail: React.FC = () => {
   const handleAnalyzeArticle = async (articleId: number) => {
     try {
       // Call the analysis API
-      const response = await fetch(`http://localhost:8000/api/v1/analysis/articles/${articleId}/analyze`, {
+      const response = await fetch(`${API_URL}/analysis/topics/${topicId}/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -6,7 +6,7 @@ import type {
 } from '../types/api';
 
 // Create axios instance
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+export const API_URL = import.meta.env.VITE_API_URL || import.meta.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 const api = axios.create({
     baseURL: API_URL,
@@ -126,7 +126,7 @@ export const articleApi = {
 // Health check API
 export const healthApi = {
   check: async () => {
-    const response = await axios.get<{ status: string }>('http://localhost:8000/health');
+    const response = await axios.get<{ status: string }>(`${API_URL.replace('/api/v1', '')}/health`);
     return response.data;
   }
 };
