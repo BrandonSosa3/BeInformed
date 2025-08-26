@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { articleApi } from '../services/api';
 import type { Article } from '../types/api';
 import ArticleSummary from '../components/layout/ArticleSummary';

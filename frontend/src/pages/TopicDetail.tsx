@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { topicApi } from '../services/api';
-import type { Topic, Article, ArticleList, TopicStatsData, SourceStats } from '../types/api';
+import type { Topic, ArticleList, TopicStatsData, SourceStats } from '../types/api';
 import TopicStatistics from '../components/dashboard/TopicStatistics';
 import ArticleFilters from '../components/dashboard/ArticleFilters';
 import BadgesLegend from '../components/BadgesLegend';
