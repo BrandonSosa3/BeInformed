@@ -1,18 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import os
 from app.api.api import api_router
-from app.core.config import settings
 
 app = FastAPI()
 
-# CORS configuration for production
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",  # Local development
-        "https://*.vercel.app",   # Any Vercel deployment
-        # You'll add your specific Vercel URL here later
+        "http://localhost:3000",    # React default port
+        "http://localhost:5173",    # Vite default port (your current frontend)
+        "http://localhost:3001",    # Alternative React port
+        "https://*.vercel.app",     # For production deployment
     ],
     allow_credentials=True,
     allow_methods=["*"],

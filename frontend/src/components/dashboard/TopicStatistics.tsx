@@ -54,13 +54,6 @@ const TopicStatistics: React.FC<TopicStatisticsProps> = ({
     );
   }
   
-  // Helper function to format sentiment score for display
-  const formatSentiment = (score: number): string => {
-    if (score === undefined || isNaN(score)) return "0";
-    const value = Math.round(score * 100) / 100;
-    return value > 0 ? `+${value}` : `${value}`;
-  };
-  
   // Calculate percentage of articles analyzed (safely)
   const analysisPercentage = 
     safeStats.totalArticles > 0 
