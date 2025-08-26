@@ -4,22 +4,19 @@ from app.api.api import api_router
 
 app = FastAPI()
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",    # React default port
-        "http://localhost:5173",    # Vite default port (your current frontend)
-        "http://localhost:3001",    # Alternative React port
-        "https://*.vercel.app",     # For production deployment
+        "http://localhost:5173",    # Local Vite frontend
+        "http://localhost:3000",    # Local React default
+        "https://be-informed-puce.vercel.app",  # Your Vercel URL
+        "https://*.vercel.app",     # Any Vercel deployment
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# Include the API router
 app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/")
