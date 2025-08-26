@@ -7,15 +7,21 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",    # Local Vite frontend
-        "http://localhost:3000",    # Local React default
-        "https://be-informed-puce.vercel.app",  # Your Vercel URL
-        "https://*.vercel.app",     # Any Vercel deployment
+        "http://localhost:5173",
+        "http://localhost:3000", 
+        "https://be-informed-puce.vercel.app",
     ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+    ],
 )
+
 app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/")
