@@ -97,27 +97,16 @@ export const useBackendHealth = () => {
     intervalRef.current = setInterval(performCheck, 5000); // Check every 5 seconds
   };
 
-  useEffect(() => {
-
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    useEffect(() => {
+        // Disable health check - rely on search error handling instead
         setStatus({
-          isHealthy: true,
-          isChecking: false,
-          isSpinningUp: false,
-          retryCount: 0,
-          message: 'Local development'
+        isHealthy: true,
+        isChecking: false,
+        isSpinningUp: false,
+        retryCount: 0,
+        message: 'Ready'
         });
-        return;
-      }
-
-    startHealthCheck();
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
+    }, []);
 
   const retryHealthCheck = () => {
     setStatus({
