@@ -97,15 +97,44 @@ export const useBackendHealth = () => {
     intervalRef.current = setInterval(performCheck, 5000); // Check every 5 seconds
   };
 
+    // In useBackendHealth.ts, replace the useEffect with:
     useEffect(() => {
-        // Disable health check - rely on search error handling instead
+        // Only show loading state in production
+        const isProduction = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+        
+        if (!isProduction) {
+        // Local development - immediately ready
         setStatus({
-        isHealthy: true,
-        isChecking: false,
-        isSpinningUp: false,
-        retryCount: 0,
-        message: 'Ready'
+            isHealthy: true,
+            isChecking: false,
+            isSpinningUp: false,
+            retryCount: 0,
+            message: 'Ready'
         });
+        return;
+        }
+    
+        // Production - show loading for 3 minutes, then assume ready
+        setStatus({
+        isHealthy: false,
+        isChecking: true,
+        isSpinningUp: true,
+        retryCount: 0,
+        message: 'Backend is starting up... Estimated wait: 1 min 30 seconds maximum as I am hosting backend on free render plan which spins down with inactivity!'
+        });
+    
+        // After 3 minutes, assume backend is ready
+        const timer = setTimeout(() => {
+        setStatus({
+            isHealthy: true,
+            isChecking: false,
+            isSpinningUp: false,
+            retryCount: 0,
+            message: 'Backend should be ready now'
+        });
+        }, 65000); // 3 minutes
+    
+        return () => clearTimeout(timer);
     }, []);
 
   const retryHealthCheck = () => {
