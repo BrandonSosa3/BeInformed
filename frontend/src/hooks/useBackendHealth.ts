@@ -25,15 +25,16 @@ export const useBackendHealth = () => {
   const checkHealth = async (): Promise<boolean> => {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
-      const response = await fetch(`${API_URL.replace('/api/v1', '')}/health`, {
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+  
+      // Use the sources endpoint which already works with CORS
+      const response = await fetch(`${API_URL}/sources?limit=1`, {
         signal: controller.signal,
         headers: {
           'Cache-Control': 'no-cache'
         }
       });
-
+  
       clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
@@ -108,7 +109,7 @@ export const useBackendHealth = () => {
         });
         return;
       }
-      
+
     startHealthCheck();
 
     return () => {
